@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#667eea"/>
+  <title>Desafios Interativos</title>
+  <link rel="stylesheet" href="styles.css"/>
+  <link rel="manifest" href="manifest.webmanifest"/>
+
+</head>
+<body>
+  <div class="quiz-ecologico-container">
+    <!-- Cabeçalho -->
+    <header class="quiz-header">
+      <h1>🏆 Desafios Interativos</h1>
+      <p>Planejado para 30 alunos (5 equipes de 6). Escolha uma categoria e pontuação. Use os botões de +/− para ajustar pontuação das equipes.</p>
+    </header>
+
+    <!-- Tabuleiro de Categorias -->
+    <div class="quiz-board" id="quiz-board"></div>
+
+    <!-- Controles -->
+    <div class="quiz-controls">
+      <button class="quiz-btn quiz-btn-neutral" id="sound-test-btn" onclick="testSound()">🎶 Testar Som</button>
+      <button class="quiz-btn quiz-btn-neutral" id="sound-toggle-btn" onclick="toggleSound()">🔊 Som: LIGADO</button>
+      <button class="quiz-btn quiz-btn-primary" onclick="resetScores()">🔄 Reiniciar Placar</button>
+      <button class="quiz-btn quiz-btn-neutral" onclick="showLightning()">⚡ Rodada Relâmpago</button>
+      <button class="quiz-btn quiz-btn-success" onclick="openSettings()">⚙️ Configurações</button>
+      <button class="quiz-btn quiz-btn-primary" onclick="openQuestionGenerator()">📝 Gerador de Perguntas</button>
+      <button class="quiz-btn quiz-btn-neutral" onclick="showQRCode()">📱 QR Code</button>
+    </div>
+
+    <!-- Modal de Senha -->
+    <div id="password-modal" class="quiz-modal" style="display: flex;">
+      <div class="quiz-card">
+        <h2>Acesso Restrito</h2>
+        <p>Para iniciar o jogo, digite a senha de acesso.</p>
+        <div style="margin: 20px 0;">
+          <input type="password" id="password-input" placeholder="Digite a senha" style="padding: 10px; border-radius: 6px; border: 1px solid #ccc; width: 100%; margin-bottom: 10px;">
+          <p id="password-error" style="color: red; display: none;">Senha incorreta. Tente novamente.</p>
+        </div>
+        <button class="quiz-btn quiz-btn-primary" onclick="checkPassword()">Acessar Jogo</button>
+      </div>
+    </div>
+
+    <!-- Modal de Cadastro de Equipes -->
+    <div id="team-setup-modal" class="quiz-modal" style="display: none;">
+      <div class="quiz-card">
+        <h2>Cadastrar Equipes</h2>
+        <p>Digite o nome de cada equipe. Deixe em branco para usar o nome padrão.</p>
+        <div id="team-inputs" style="margin: 20px 0;">
+          <!-- Inputs serão gerados pelo JS -->
+        </div>
+        <button class="quiz-btn quiz-btn-primary" onclick="startGame()">▶️ Iniciar Jogo</button>
+      </div>
+    </div>
+
+    <!-- Placar -->
+    <div class="quiz-scoreboard" id="quiz-scoreboard"></div>
+
+    <!-- Modal de Pergunta -->
+    <div id="quiz-modal" style="display:none;" class="quiz-modal">
+      <div class="quiz-card">
+        <h2 id="modal-title"></h2>
+        
+        <!-- Timer -->
+        <div class="quiz-timer-container" id="timer-container">
+          <div class="quiz-timer-display" id="timer-display">30</div>
+          <div class="quiz-timer-controls">
+            <button class="quiz-btn quiz-btn-success" onclick="startTimer()">▶️ Iniciar Timer</button>
+            <button class="quiz-btn quiz-btn-warning" onclick="pauseTimer()">⏸️ Pausar</button>
+            <button class="quiz-btn quiz-btn-danger" onclick="resetTimer()">🔄 Reiniciar</button>
+          </div>
+        </div>
+        
+        <!-- Pergunta -->
+        <p id="modal-question" class="quiz-question"></p>
+        
+        <!-- Botões de Ação -->
+        <div style="margin-top:20px;">
+          <button class="quiz-btn quiz-btn-primary" onclick="showAnswer()">💡 Mostrar Resposta</button>
+          <button class="quiz-btn quiz-btn-warning" onclick="goBack()">↩️ Voltar</button>
+          <button class="quiz-btn quiz-btn-danger" onclick="closeModal()">✅ Marcar como Usada e Fechar</button>
+        </div>
+        
+        <!-- Bloco de Resposta -->
+        <div id="answer-block" class="quiz-answer-block" style="display:none;">
+          <h3>✅ Resposta</h3>
+          <p id="modal-answer" class="quiz-answer"></p>
+          <p><strong>📝 Justificativa:</strong> <span id="modal-just"></span></p>
+          
+          <!-- Seção de Pontuação -->
+          <div class="quiz-points-section">
+            <label>Adicionar pontos à equipe: </label>
+            <select id="team-select"></select>
+            <input type="number" id="points-input" value="0" style="width:100px;">
+            <button onclick="addPoints()" class="quiz-btn quiz-btn-success">➕ Adicionar</button>
+            <button onclick="subtractPoints()" class="quiz-btn quiz-btn-danger">➖ Subtrair</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Configurações -->
+    <div id="settings-modal" class="quiz-modal" style="display: none;">
+      <div class="quiz-card settings-panel">
+        <h2>⚙️ Configurações de Acessibilidade</h2>
+        
+        <!-- Sons Gerais -->
+        <div class="settings-section">
+          <h3>🔊 Sons Gerais</h3>
+          <div class="settings-item">
+            <label>
+              <input type="checkbox" id="sound-enabled" onchange="toggleSoundEnabled()" checked>
+              Ativar sons do jogo
+            </label>
+          </div>
+          <div class="settings-item">
+            <label for="sound-volume">Volume: <span id="volume-display">50%</span></label>
+            <input type="range" id="sound-volume" min="0" max="100" value="50" 
+                   oninput="updateVolume(this.value)" style="width: 100%;">
+          </div>
+        </div>
+
+        <!-- Narrador -->
+        <div class="settings-section">
+          <h3>🗣️ Narrador (Text-to-Speech)</h3>
+          <div class="settings-item">
+            <label>
+              <input type="checkbox" id="narrator-enabled" onchange="toggleNarratorEnabled()" checked>
+              Ativar narrador para deficientes visuais
+            </label>
+          </div>
+          <div class="settings-item">
+            <label for="narrator-speed">Velocidade: <span id="speed-display">1.0x</span></label>
+            <input type="range" id="narrator-speed" min="0.5" max="2.0" step="0.1" value="1.0" 
+                   oninput="updateNarratorSpeed(this.value)" style="width: 100%;">
+          </div>
+          <div class="settings-item">
+            <label for="narrator-pitch">Tom de voz: <span id="pitch-display">1.0</span></label>
+            <input type="range" id="narrator-pitch" min="0.5" max="2.0" step="0.1" value="1.0" 
+                   oninput="updateNarratorPitch(this.value)" style="width: 100%;">
+          </div>
+          <div class="settings-item">
+            <button class="quiz-btn quiz-btn-neutral" onclick="testNarrator()">🎤 Testar Narrador</button>
+          </div>
+        </div>
+
+        <!-- Sons Específicos -->
+        <div class="settings-section">
+          <h3>🎵 Sons Específicos</h3>
+          <div class="settings-item">
+            <label>
+              <input type="checkbox" id="correct-sound-enabled" onchange="toggleCorrectSound()" checked>
+              Som de resposta correta
+            </label>
+            <button class="quiz-btn quiz-btn-sm quiz-btn-success" onclick="testCorrectSound()">▶️</button>
+          </div>
+          <div class="settings-item">
+            <label>
+              <input type="checkbox" id="wrong-sound-enabled" onchange="toggleWrongSound()" checked>
+              Som de resposta incorreta
+            </label>
+            <button class="quiz-btn quiz-btn-sm quiz-btn-danger" onclick="testWrongSound()">▶️</button>
+          </div>
+          <div class="settings-item">
+            <label>
+              <input type="checkbox" id="timer-sound-enabled" onchange="toggleTimerSound()" checked>
+              Sons do timer
+            </label>
+          </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div style="margin-top: 30px; text-align: center;">
+          <button class="quiz-btn quiz-btn-warning" onclick="resetSettings()">🔄 Restaurar Padrões</button>
+          <button class="quiz-btn quiz-btn-primary" onclick="closeSettings()">✅ Salvar e Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de QR Code -->
+    <div id="qrcode-modal" class="quiz-modal" style="display: none;">
+      <div class="quiz-card" style="text-align: center;">
+        <h2>📱 Acesso Rápido via QR Code</h2>
+        <p>Escaneie o QR Code abaixo para acessar o jogo rapidamente em seu dispositivo móvel:</p>
+        <div style="margin: 30px auto;">
+          <img src="qrcode.png" alt="QR Code para acesso ao jogo" style="max-width: 400px; width: 100%; border: 2px solid #667eea; border-radius: 10px;">
+        </div>
+        <p style="color: #4a5568; font-size: 0.9em;">
+          <strong>Instruções:</strong><br>
+          1. Abra a câmera do seu celular<br>
+          2. Aponte para o QR Code<br>
+          3. Toque na notificação que aparecer<br>
+          4. O jogo abrirá automaticamente no navegador
+        </p>
+        <div style="margin-top: 20px;">
+          <button class="quiz-btn quiz-btn-primary" onclick="closeQRCode()">✅ Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal do Gerador de Perguntas -->
+    <div id="generator-modal" class="quiz-modal" style="display: none;">
+      <div class="quiz-card" style="max-width: 1200px;">
+        <h2>📝 Gerador de Perguntas Universais</h2>
+        <p style="color: #4a5568; margin-bottom: 20px;">
+          Crie perguntas de qualquer disciplina (Matemática, História, Biologia, Química, etc.) para nível médio ou superior.
+        </p>
+        
+        <!-- Lista de Categorias -->
+        <div id="generator-categories-list">
+          <!-- Categorias serão renderizadas aqui -->
+        </div>
+        
+        <!-- Editor de Categoria -->
+        <div id="category-editor" style="display: none;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+            <h3 id="category-editor-title" style="color: #2d3748; margin: 0;"></h3>
+            <button class="quiz-btn quiz-btn-warning" onclick="backToCategories()">↩️ Voltar</button>
+          </div>
+          
+          <div id="category-questions-list">
+            <!-- Perguntas serão renderizadas aqui -->
+          </div>
+          
+          <!-- Formulário de Pergunta -->
+          <div id="question-form" style="display: none; background: #f7fafc; padding: 20px; border-radius: 10px; margin-top: 20px;">
+            <h4 id="question-form-title" style="color: #2d3748; margin-bottom: 15px;">Nova Pergunta</h4>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; font-weight: bold; color: #2d3748; margin-bottom: 5px;">Pergunta:</label>
+              <textarea id="question-text" rows="3" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #cbd5e0; font-family: inherit; resize: vertical;" placeholder="Digite a pergunta aqui..."></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; font-weight: bold; color: #2d3748; margin-bottom: 5px;">Resposta:</label>
+              <textarea id="answer-text" rows="2" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #cbd5e0; font-family: inherit; resize: vertical;" placeholder="Digite a resposta correta..."></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; font-weight: bold; color: #2d3748; margin-bottom: 5px;">Justificativa:</label>
+              <textarea id="justification-text" rows="3" style="width: 100%; padding: 10px; border-radius: 6px; border: 2px solid #cbd5e0; font-family: inherit; resize: vertical;" placeholder="Explique por que esta é a resposta correta..."></textarea>
+            </div>
+            
+            <div style="margin-bottom: 15px;">
+              <label style="display: block; font-weight: bold; color: #2d3748; margin-bottom: 5px;">Pontuação:</label>
+              <input type="number" id="points-value" value="100" min="10" max="500" step="10" style="width: 150px; padding: 10px; border-radius: 6px; border: 2px solid #cbd5e0;">
+            </div>
+            
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+              <button class="quiz-btn quiz-btn-warning" onclick="cancelQuestionForm()">❌ Cancelar</button>
+              <button class="quiz-btn quiz-btn-success" onclick="saveQuestion()">✅ Salvar Pergunta</button>
+            </div>
+          </div>
+          
+          <div style="margin-top: 20px; text-align: center;">
+            <button class="quiz-btn quiz-btn-success" onclick="newQuestion()">➕ Nova Pergunta</button>
+          </div>
+        </div>
+        
+        <!-- Botões de Ação -->
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e2e8f0; display: flex; gap: 10px; justify-content: space-between; flex-wrap: wrap;">
+          <div style="display: flex; gap: 10px;">
+            <button class="quiz-btn quiz-btn-neutral" onclick="exportQuestions()">💾 Exportar JSON</button>
+            <button class="quiz-btn quiz-btn-neutral" onclick="importQuestions()">📂 Importar JSON</button>
+          </div>
+          <div style="display: flex; gap: 10px;">
+            <button class="quiz-btn quiz-btn-success" onclick="newCategory()">➕ Nova Categoria</button>
+            <button class="quiz-btn quiz-btn-primary" onclick="applyQuestionsToGame()">✅ Aplicar ao Jogo</button>
+            <button class="quiz-btn quiz-btn-warning" onclick="closeQuestionGenerator()">❌ Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="quiz-footer">
+      Jogo idealizado e desenvolvido por <strong>José Carlos Figueira</strong> | Acessibilidade: Sons e Narrador
+    </footer>
+  </div>
+
+  <script src="sounds.js"></script>
+  <script src="quiz_data.js"></script>
+  <script src="question_generator.js"></script>
+  <script src="script.js"></script>
+
+  <script>
+    // Funções auxiliares para QR Code
+    function showQRCode() {
+      document.getElementById('qrcode-modal').style.display = 'flex';
+      speak('Modal de QR Code aberto. Escaneie o código para acessar o jogo em seu dispositivo móvel.');
+    }
+    
+    function closeQRCode() {
+      document.getElementById('qrcode-modal').style.display = 'none';
+      speak('Modal de QR Code fechado');
+    }
+  </script>
+
+  <script>
+    // Registro de service worker (funcionará apenas em HTTP(S) ou localhost)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./service-worker.js')
+        .then(reg => console.log('ServiceWorker registrado:', reg.scope))
+        .catch(err => console.warn('ServiceWorker falhou:', err));
+    } else {
+      console.warn('ServiceWorker não suportado neste navegador.');
+    }
+  </script>
+</body>
+</html>

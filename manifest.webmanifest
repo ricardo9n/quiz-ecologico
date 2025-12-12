@@ -1,0 +1,11 @@
+{
+  "name": "Desafios Interativos",
+  "short_name": "Desafios",
+  "description": "Quiz interativo — aulas e competições em sala",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#667eea"
+}
